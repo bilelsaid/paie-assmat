@@ -237,14 +237,14 @@
       '<label for="year">Année<input id="year" type="number" min="2024" max="2100" step="1" inputmode="numeric"></label>' +
       '<label for="unpaid">Jours ouvrés non rémunérés (ce mois)<input id="unpaid" type="number" min="0" step="1" inputmode="numeric"></label></div>' +
       '<p class="hint" id="tarifs"></p></section>' +
-      '<section class="panel"><h2>Calendrier du mois</h2><div class="cal-head"><div class="seg" role="group" aria-label="Ce que le clic marque"><button type="button" id="mode-cp" aria-pressed="true">Congé payé</button><button type="button" id="mode-abs" aria-pressed="false">Enfant absent</button></div><button type="button" id="clear">Effacer le mois</button></div>' +
+      '<div class="mois-grid"><section class="panel"><h2>Calendrier du mois</h2><div class="cal-head"><div class="seg" role="group" aria-label="Ce que le clic marque"><button type="button" id="mode-cp" aria-pressed="true">Congé payé</button><button type="button" id="mode-abs" aria-pressed="false">Enfant absent</button></div><button type="button" id="clear">Effacer le mois</button></div>' +
       '<div class="cal" id="cal" role="group" aria-label="Jours du mois"></div>' +
       '<div class="legend"><span><i style="background:var(--cp)"></i>Congé payé</span><span><i style="background:var(--sat)"></i>Samedi</span><span><i style="background:var(--sun)"></i>Dimanche</span><span><i style="background:var(--hol)"></i>Jour férié</span><span><i style="background:var(--abs)"></i>Enfant absent</span><span><i style="background:var(--surface);box-shadow:inset 0 0 0 2px var(--ink)"></i>Compté en CPO</span></div>' +
       '<div class="row" style="margin-top:14px"><label for="leave-from">Ajouter des congés à partir du<input id="leave-from" type="date"></label><label for="leave-n">Nombre de jours ouvrés<input id="leave-n" type="number" min="1" max="60" step="1" value="1" inputmode="numeric"></label><button type="button" class="primary" id="leave-add">Ajouter</button></div></section>' +
-      '<section><h2 style="margin-bottom:8px">Résultat</h2><div class="cols"><div class="tbl" id="recap"></div><div class="tbl" id="pay"></div></div>' +
-      '<div class="bar"><button type="button" class="primary" id="save-month">Enregistrer ce mois</button><span class="ok" id="saved" role="status" style="margin:0"></span></div></section>' +
+      '<section id="result-sec"><h2 style="margin-bottom:8px">Résultat</h2><div class="cols"><div class="tbl" id="recap"></div><div class="tbl" id="pay"></div></div>' +
+      '<div class="bar"><button type="button" class="primary" id="save-month">Enregistrer ce mois</button><span class="ok" id="saved" role="status" style="margin:0"></span>' + (Platform.canPrint ? '<button type="button" id="print-month">Imprimer</button>' : '') + '</div></section></div>' +
       '<section class="panel"><h2>Mois enregistrés</h2><div class="hist" id="hist"></div><p class="hint" id="dbnote"></p></section>' +
-      '<section class="panel"><h2>Partager le résultat</h2><label for="msg">Message (modifiable avant l\'envoi)<textarea id="msg"></textarea></label><div class="share"><button type="button" class="primary" id="s-native" hidden>Partager…</button><a class="wa" id="s-wa" href="#">WhatsApp</a><a id="s-tg" href="#">Telegram</a><a id="s-mail" href="#">E-mail</a><button type="button" id="s-copy">Copier le message</button></div><p class="ok" id="copied" role="status"></p></section></div>';
+      '<section class="panel" id="share-panel"><h2>Partager le résultat</h2><label for="msg">Message (modifiable avant l\'envoi)<textarea id="msg"></textarea></label><div class="share"><button type="button" class="primary" id="s-native" hidden>Partager…</button><a class="wa" id="s-wa" href="#">WhatsApp</a><a id="s-tg" href="#">Telegram</a><a id="s-mail" href="#">E-mail</a><button type="button" id="s-copy">Copier le message</button></div><p class="ok" id="copied" role="status"></p></section></div>';
     $('month').value = S.month; $('year').value = S.year; $('unpaid').value = S.unp[mk()] || 0; $('leave-from').value = S.year + '-' + pad(S.month) + '-01';
     $('tarifs').textContent = 'Tarifs du contrat : ' + fmtN(C.taux, 2) + ' €/h · ' + fmtN(C.indemnite, 2) + ' €/jour d\'entretien · ' + fmtN(C.hpd, 1) + ' h/jour + ' + fmtN(C.hsup, 1) + ' h/mois (modifiables dans Réglages).';
     if (!dbOK) $('dbnote').textContent = 'Base locale indisponible : les données ne seront pas conservées.';
@@ -280,7 +280,8 @@
       var t = $('msg').value, ok = function (m) { $('copied').textContent = m; setTimeout(function () { var c = $('copied'); if (c) c.textContent = ''; }, 3000); };
       try { await navigator.clipboard.writeText(t); ok('Message copié.'); } catch (e) { $('msg').focus(); $('msg').select(); ok('Message sélectionné : copie-le avec le menu de ton appareil.'); }
     };
-    if (window.Android && window.Android.share) { $('s-native').hidden = false; $('s-native').onclick = function () { window.Android.share($('msg').value); }; }
+    if (Platform.share.available()) { $('s-native').hidden = false; $('s-native').onclick = function () { Platform.share.text($('msg').value); }; }
+    if ($('print-month')) $('print-month').onclick = function () { window.print(); };
     updMois(); hist();
   }
   function updShare() {
@@ -450,8 +451,16 @@
       '<p class="hint" style="margin:0">L\'adresse et les dates de naissance ne sont jamais partagées.</p></div></section>' +
       '<section class="panel"><h2>Sauvegarde et restauration</h2><p class="hint" style="margin-top:0" id="bk-info">' + lb + '</p><div class="bar"><button type="button" class="primary" id="bk-exp">Exporter (JSON)</button><button type="button" id="bk-imp">Importer…</button></div>' +
       '<input type="file" id="bk-file" accept="application/json,.json" hidden><div id="bk-prev" class="stack" style="margin-top:12px"></div><p class="ok" id="bk-msg" role="status"></p></section>' +
+      '<section class="panel"><h2>Stockage et confidentialité</h2><p class="hint" id="persist-info" style="margin-top:0">Stockage persistant : …</p><div class="bar"><button type="button" id="priv-open" aria-expanded="false" aria-controls="privacy">Confidentialité</button></div>' +
+      '<div id="privacy" hidden><p>Toutes tes données (profil, enfant, contrat, jours, paiements) sont enregistrées uniquement sur cet appareil. Aucune donnée ne quitte jamais ton appareil : aucun compte, aucun serveur, aucune statistique, aucun suivi. L\'appli fonctionne hors ligne.</p><p>Seules tes sauvegardes JSON exportées et le message que tu choisis de partager sortent de l\'appli, à ta demande.</p><p>Outil de calcul indicatif, pas un avis juridique.</p></div></section>' +
       '<section class="panel"><h2>Zone sensible</h2><div id="del-zone"><button type="button" class="danger" id="del-ask">Tout supprimer</button></div></section>' +
-      '<p class="hint">Paie Assmat 1.1.0 — outil de calcul indicatif, pas un avis juridique.</p></div>';
+      '<p class="hint">Paie Assmat <span id="app-version">' + Platform.APP_VERSION + '</span> — outil de calcul indicatif, pas un avis juridique.</p></div>';
+    $('priv-open').onclick = function () { var p = $('privacy'); p.hidden = !p.hidden; this.setAttribute('aria-expanded', String(!p.hidden)); };
+    Platform.persistence().then(function (r) {
+      var el = $('persist-info'); if (!el) return;
+      el.textContent = 'Stockage persistant : ' + (r.persisted === true ? 'oui' : 'non') + (r.persisted === false ? ' — exporte régulièrement une sauvegarde.' : '');
+      if (r.supported && r.persisted === false) Platform.requestPersistence().then(function (ok) { var e2 = $('persist-info'); if (ok && e2) e2.textContent = 'Stockage persistant : oui'; });
+    });
     var saveP = async function (which) {
       var p = readParent(), c = readChild(), k = readContract();
       var errs = which === 'p' ? parentErrors(p) : which === 'c' ? childErrors(c) : contractErrors(k);
@@ -468,12 +477,10 @@
       try {
         var json = JSON.stringify(E.buildExport(await DB.dump(), new Date().toISOString()), null, 2);
         var name = 'paie-assmat-' + today() + '.json';
-        if (window.Android && window.Android.exportFile) { window.Android.exportFile(name, json); return; }
-        var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' })); a.download = name;
-        document.body.appendChild(a); a.click(); a.remove(); window.onExportResult(true);
+        Platform.files.exportJSON(name, json);
       } catch (e) { say("Échec de l'export."); }
     };
-    $('bk-imp').onclick = function () { if (window.Android && window.Android.importFile) window.Android.importFile(); else $('bk-file').click(); };
+    $('bk-imp').onclick = function () { Platform.files.importJSON(); };
     $('bk-file').onchange = function () {
       var f = this.files[0]; if (!f) return; var r = new FileReader();
       r.onload = function () { window.onImportFile(r.result); }; r.readAsText(f); this.value = '';
@@ -491,6 +498,7 @@
 
   window.onExportResult = function (ok) {
     if (!ok) { var m0 = $('bk-msg'); if (m0) m0.textContent = 'Export annulé ou échoué.'; return; }
+    Platform.prefs.set('lastBackupAt', new Date().toISOString());
     saveSettings({ lastBackupAt: new Date().toISOString() }).then(function () {
       var m = $('bk-msg'); if (m) m.textContent = 'Sauvegarde exportée.';
       var i = $('bk-info'); if (i) i.textContent = 'Dernière sauvegarde : ' + fmtDate(today()); renderBanner();
@@ -505,12 +513,23 @@
     box.innerHTML = '<div class="alert good">Sauvegarde valide' + (p.exportedAt ? ' du ' + fmtDate(p.exportedAt.slice(0, 10)) : '') + ' : ' + p.counts.days + ' jour(s), ' + p.counts.months + ' mois, ' + p.counts.payments + ' paiement(s).</div>' +
       '<div class="bar"><button type="button" class="primary" id="im-merge">Fusionner avec mes données</button><button type="button" class="danger" id="im-replace">Remplacer mes données</button><button type="button" id="im-cancel">Annuler</button></div>';
     var run = async function (m) {
-      try { await DB.restore(p.data, m); await loadAll(); await saveSettings({ migrated: true }); box.innerHTML = ''; msg.textContent = 'Import terminé (' + (m === 'merge' ? 'fusion' : 'remplacement') + ').'; if (!C) { onboarding(); } }
+      try { await DB.restore(p.data, m); await loadAll(); await saveSettings({ migrated: true }); box.innerHTML = ''; msg.textContent = 'Import terminé (' + (m === 'merge' ? 'fusion' : 'remplacement') + ').'; if (!C) { onboarding(); } else if ($('restore-first')) { go('mois'); } }
       catch (e) { msg.textContent = "Échec de l'import."; }
     };
     $('im-merge').onclick = function () { run('merge'); }; $('im-replace').onclick = function () { run('replace'); };
     $('im-cancel').onclick = function () { box.innerHTML = ''; };
   };
+
+  /* ---------- données absentes alors qu'une sauvegarde a déjà été faite (FR-13) ---------- */
+  function restoreFirst() {
+    var o = $('screen');
+    o.innerHTML = '<div class="panel stack" role="alertdialog" aria-labelledby="rf-t"><h2 id="rf-t">Aucune donnée trouvée</h2><p class="alert warn">Une sauvegarde avait été exportée depuis ce navigateur, mais les données locales sont vides (le navigateur a pu les effacer). Restaure ta dernière sauvegarde JSON.</p>' +
+      '<div class="bar"><button type="button" class="primary" id="restore-first">Restaurer une sauvegarde…</button><button type="button" id="restore-skip">Commencer à neuf</button></div>' +
+      '<input type="file" id="bk-file" accept="application/json,.json" hidden><div id="bk-prev" class="stack"></div><p class="ok" id="bk-msg" role="status"></p></div>';
+    $('restore-first').onclick = function () { Platform.files.importJSON(); };
+    $('bk-file').onchange = function () { var f = this.files[0]; if (!f) return; var r = new FileReader(); r.onload = function () { window.onImportFile(r.result); }; r.readAsText(f); this.value = ''; };
+    $('restore-skip').onclick = function () { o.innerHTML = ''; onboarding(); };
+  }
 
   /* ---------- démarrage ---------- */
   document.querySelectorAll('#tabs button').forEach(function (b) { b.onclick = function () { if (C) go(b.dataset.tab); }; });
@@ -518,6 +537,11 @@
     try { await DB.open(); dbOK = true; await loadAll(); await migrateLegacy(); await loadAll(); if (!C && !legacy) legacy = await DB.get('state', 'main') || null; }
     catch (e) { dbOK = false; }
     var t = new Date(); if (!C) { S.year = t.getFullYear(); S.month = t.getMonth() + 1; } else { S.year = t.getFullYear(); S.month = t.getMonth() + 1; }
-    if (!C) onboarding(); else go('mois');
+    if (!C && !legacy && Platform.target === 'web' && Platform.prefs.get('lastBackupAt')) restoreFirst(); else if (!C) onboarding(); else go('mois');
+    Platform.registerServiceWorker(function (apply) {
+      var b = $('banner'); if (!b || !b.hidden) return; b.hidden = false;
+      b.innerHTML = 'Nouvelle version disponible. <button type="button" id="upd">Mettre à jour</button>';
+      $('upd').onclick = apply;
+    });
   })();
 })();
