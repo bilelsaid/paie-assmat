@@ -20,6 +20,21 @@ Copie `app-debug.apk` sur le téléphone, ouvre-le, autorise « Installer des ap
 Stockées dans les données de l'appli (IndexedDB). Elles restent sur le téléphone, survivent à la fermeture de l'appli,
 mais sont supprimées si tu désinstalles l'appli ou si tu effaces ses données.
 
+## Version 1.3.0 — multiplateforme, phases 2 (AppGallery) et 3 (iOS)
+
+**AppGallery (Huawei)** — APK release signé par notre propre clé, sans service Google ni permission réseau.
+- Signature lue dans l'environnement (`ANDROID_KEYSTORE_FILE`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`) ; aucune clé dans le dépôt.
+- CI : secrets `ANDROID_KEYSTORE_B64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` → artefact `paie-assmat-apk-appgallery`. Sans secret, une clé jetable prouve que la chaîne de signature fonctionne (`apksigner verify`), sans publier l'APK.
+- Fiche et politique de confidentialité en anglais, icône 216 × 216 : `store/appgallery/`. **Garder la clé de signature en lieu sûr : elle sert à chaque mise à jour.**
+
+**iOS (Capacitor)** — `platform-ios.js` : SQLite natif (table `kv(store, key, json)`), Preferences (date de dernière sauvegarde), Filesystem + feuille de partage (export), sélecteur de fichiers iOS (import).
+- `node scripts/build-www.js` prépare `www/` ; `scripts/ios-ci.sh` génère le projet, fixe iOS 15 et compile sur simulateur.
+- Workflow `Build iOS (simulateur)` : manuel (`workflow_dispatch`, runner macOS).
+
+**Commun** — CSP `default-src 'self'` (NFR-8) ; la date de dernière sauvegarde déclenche l'alerte de restauration sur toutes les cibles (FR-12).
+
+**Non vérifié ici** : plugin SQLite réel (testé avec un faux), build Xcode, TestFlight, essai sur téléphone Huawei, conservation des données iOS après 8 jours.
+
 ## Version 1.2.0 — multiplateforme, phase 1 (web PC / PWA)
 
 - Interface `Platform` (`platform.js`) : stockage, préférences, import/export, partage, persistance ; seule couche dépendant de la cible.

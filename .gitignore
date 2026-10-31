@@ -3,3 +3,11 @@ build/
 local.properties
 .idea/
 *.iml
+*.jks
+*.keystore
+*.p12
+keystore.properties
+node_modules/
+www/
+ios/App/Pods/
+ios/App/build/

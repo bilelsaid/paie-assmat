@@ -1,0 +1,21 @@
+name: Build iOS (simulateur)
+# Manuel : les minutes macOS sont plus chères (D6) et ce build ne doit pas rendre main rouge tant que le compte Apple n'existe pas.
+on:
+  workflow_dispatch:
+jobs:
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Tests de l'adaptateur iOS
+        run: node --test tests/*.test.js
+      - name: Xcode récent
+        run: |
+          ls /Applications | grep -i xcode || true
+          sudo xcode-select -s "$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort | tail -1 || echo /Applications/Xcode.app)" || true
+          xcodebuild -version
+      - name: Build simulateur
+        run: ./scripts/ios-ci.sh

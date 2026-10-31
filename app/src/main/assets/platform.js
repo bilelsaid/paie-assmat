@@ -2,14 +2,16 @@
    app.js n'appelle que cette interface ; une coquille native ajoute son implémentation ici. */
 (function (root) {
   'use strict';
-  var APP_VERSION = '1.2.0';
+  var APP_VERSION = '1.3.0';
   var A = root.Android || null;
-  var cap = root.Capacitor && root.Capacitor.isNativePlatform && root.Capacitor.isNativePlatform();
+  var cap = root.Capacitor && root.Capacitor.isNativePlatform && root.Capacitor.isNativePlatform() && root.Capacitor.getPlatform && root.Capacitor.getPlatform() === 'ios';
   var P = { APP_VERSION: APP_VERSION, target: A ? 'android' : (cap ? 'ios' : 'web') };
 
-  P.storage = root.DB; // iOS : remplacé par l'adaptateur SQLite (phase 3)
+  var IOS = root.IosShell && root.IosShell.active ? root.IosShell : null; // coquille iOS (platform-ios.js)
+  P.ready = IOS ? IOS.ready : Promise.resolve();
+  P.storage = root.DB; // iOS : platform-ios.js a déjà remplacé DB par l'adaptateur SQLite
 
-  P.prefs = {
+  P.prefs = IOS ? IOS.prefs : {
     get: function (k) { try { return root.localStorage.getItem('paie.' + k); } catch (e) { return null; } },
     set: function (k, v) { try { root.localStorage.setItem('paie.' + k, v); } catch (e) { /* ignore */ } }
   };
@@ -45,6 +47,8 @@
       else if (root.navigator.share) root.navigator.share({ text: t }).catch(function () { /* annulé */ });
     }
   };
+
+  if (IOS) { P.files.exportJSON = IOS.files.exportJSON; P.share = IOS.share; }
 
   P.canPrint = P.target === 'web';
 
