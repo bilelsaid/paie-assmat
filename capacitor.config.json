@@ -1,0 +1,6 @@
+{
+  "appId": "com.bilel.paieassmat",
+  "appName": "Paie Assmat",
+  "webDir": "www",
+  "ios": { "contentInset": "always" }
+}

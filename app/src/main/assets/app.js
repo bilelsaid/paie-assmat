@@ -534,10 +534,11 @@
   /* ---------- démarrage ---------- */
   document.querySelectorAll('#tabs button').forEach(function (b) { b.onclick = function () { if (C) go(b.dataset.tab); }; });
   (async function () {
+    await Platform.ready;
     try { await DB.open(); dbOK = true; await loadAll(); await migrateLegacy(); await loadAll(); if (!C && !legacy) legacy = await DB.get('state', 'main') || null; }
     catch (e) { dbOK = false; }
     var t = new Date(); if (!C) { S.year = t.getFullYear(); S.month = t.getMonth() + 1; } else { S.year = t.getFullYear(); S.month = t.getMonth() + 1; }
-    if (!C && !legacy && Platform.target === 'web' && Platform.prefs.get('lastBackupAt')) restoreFirst(); else if (!C) onboarding(); else go('mois');
+    if (!C && !legacy && Platform.prefs.get('lastBackupAt')) restoreFirst(); else if (!C) onboarding(); else go('mois');
     Platform.registerServiceWorker(function (apply) {
       var b = $('banner'); if (!b || !b.hidden) return; b.hidden = false;
       b.innerHTML = 'Nouvelle version disponible. <button type="button" id="upd">Mettre à jour</button>';

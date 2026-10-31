@@ -28,3 +28,38 @@ jobs:
         with:
           name: paie-assmat-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+      - name: Clé de signature (secrets du dépôt, sinon clé jetable de test)
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "SIGNING=real" >> "$GITHUB_ENV"
+            PASS="$KS_PASS"; ALIAS="$KS_ALIAS"
+          else
+            PASS="$(head -c 18 /dev/urandom | base64 | tr -dc 'A-Za-z0-9')"; ALIAS=test
+            keytool -genkeypair -keystore "$RUNNER_TEMP/release.jks" -storepass "$PASS" -keypass "$PASS" -alias "$ALIAS" \
+              -keyalg RSA -keysize 2048 -validity 2 -dname "CN=CI test"
+            echo "SIGNING=ephemeral" >> "$GITHUB_ENV"
+          fi
+          echo "::add-mask::$PASS"
+          {
+            echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/release.jks"
+            echo "ANDROID_KEYSTORE_PASSWORD=$PASS"
+            echo "ANDROID_KEY_ALIAS=$ALIAS"
+            echo "ANDROID_KEY_PASSWORD=$PASS"
+          } >> "$GITHUB_ENV"
+      - name: Build release APK signé
+        run: ./gradlew assembleRelease --no-daemon
+      - name: Vérifier la signature (apksigner verify)
+        run: |
+          BT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          "$BT/apksigner" verify --print-certs app/build/outputs/apk/release/app-release.apk
+      - name: Publier l'APK AppGallery (clé réelle uniquement)
+        if: env.SIGNING == 'real'
+        uses: actions/upload-artifact@v4
+        with:
+          name: paie-assmat-apk-appgallery
+          path: app/build/outputs/apk/release/app-release.apk
