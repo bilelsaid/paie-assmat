@@ -123,3 +123,18 @@ label.chk input{width:auto}
 .meter i.warn{background:var(--hol)} .meter i.bad{background:#B3261E}
 .danger{border-color:#B3261E;color:#B3261E}
 .stack{display:flex;flex-direction:column;gap:14px}
+
+.mois-grid{display:contents}
+@media (min-width:1024px){
+  .wrap{max-width:1280px}
+  .mois-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start}
+  .mois-grid #result-sec .cols{grid-template-columns:1fr}
+  .tabbar{position:static;max-width:1280px;margin:0 auto;border:1px solid var(--line);border-radius:8px}
+  body{padding-bottom:0}
+}
+button:focus-visible,.day:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+@media print{
+  #tabs,#share-panel,#banner,#print-month,.cal-head,#hist,.bar,#onb{display:none!important}
+  body{background:#fff;color:#000}
+  .mois-grid{display:block}
+}

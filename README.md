@@ -20,6 +20,15 @@ Copie `app-debug.apk` sur le téléphone, ouvre-le, autorise « Installer des ap
 Stockées dans les données de l'appli (IndexedDB). Elles restent sur le téléphone, survivent à la fermeture de l'appli,
 mais sont supprimées si tu désinstalles l'appli ou si tu effaces ses données.
 
+## Version 1.2.0 — multiplateforme, phase 1 (web PC / PWA)
+
+- Interface `Platform` (`platform.js`) : stockage, préférences, import/export, partage, persistance ; seule couche dépendant de la cible.
+- Version web installable et hors ligne (`manifest.webmanifest`, `sw.js`, cache versionné ; actif uniquement hors WebView Android).
+- Mise en page deux colonnes ≥ 1024 px, impression du mois, navigation clavier, écran de restauration si les données locales ont disparu après une sauvegarde, page Confidentialité, indicateur de stockage persistant.
+- Format de sauvegarde inchangé (`schemaVersion` 2) : un export Android 1.1.0 s'importe tel quel.
+- Tests : `node --test tests/*.test.js` ; e2e : `node tests/e2e/regression.e2e.js`, `node tests/e2e/phase1.e2e.js` (Playwright).
+- Phases 2 (AppGallery) et 3 (iOS/Capacitor) : en attente des comptes Huawei/Apple (voir la spécification).
+
 ## Version 1.1.0 (branche `feature/f0-f4-profil-conges-paiements`)
 - **F0** Profil parent / enfant / contrat (52 semaines uniquement), saisi à la première ouverture, modifiable dans Réglages.
 - **F1** Droits à congés : acquis (prorata ou périodes de 4 semaines, réglable), pris, posés, solde, alertes à 80 % et en cas de dépassement, correction manuelle.

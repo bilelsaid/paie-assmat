@@ -1,0 +1,195 @@
+{
+  "app": "paie-assmat",
+  "schemaVersion": 2,
+  "exportedAt": "2026-10-31T10:00:00.000Z",
+  "data": {
+    "profile": {
+      "id": "main",
+      "nom": "Dupont",
+      "prenom": "Camille",
+      "naissance": "",
+      "adresse": "1 rue de l Exemple",
+      "codePostal": "92160",
+      "ville": "Exempleville",
+      "email": "camille.dupont@example.org",
+      "telephone": "06 12 34 56 78",
+      "lien": "pere",
+      "vivents": ""
+    },
+    "children": [
+      {
+        "id": "e1",
+        "nom": "Dupont",
+        "prenom": "Alex",
+        "naissance": "2025-03-01"
+      }
+    ],
+    "contracts": [
+      {
+        "id": "c1",
+        "childId": "e1",
+        "type": "mensualise52",
+        "start": "2026-09-07",
+        "taux": 5.5,
+        "indemnite": 7,
+        "hpd": 9,
+        "hsup": 2,
+        "enfantsCharge": 0
+      }
+    ],
+    "rates": [
+      {
+        "id": "r1793437200731",
+        "contractId": "c1",
+        "taux": 5.5,
+        "indemnite": 7,
+        "from": "2026-10-31"
+      }
+    ],
+    "days": [
+      {
+        "key": "c1|2026-09-30",
+        "contractId": "c1",
+        "date": "2026-09-30",
+        "type": "cp"
+      },
+      {
+        "key": "c1|2026-10-01",
+        "contractId": "c1",
+        "date": "2026-10-01",
+        "type": "cp"
+      },
+      {
+        "key": "c1|2026-10-02",
+        "contractId": "c1",
+        "date": "2026-10-02",
+        "type": "cp"
+      },
+      {
+        "key": "c1|2026-10-23",
+        "contractId": "c1",
+        "date": "2026-10-23",
+        "type": "cp"
+      },
+      {
+        "key": "c1|2026-10-26",
+        "contractId": "c1",
+        "date": "2026-10-26",
+        "type": "cp"
+      },
+      {
+        "key": "c1|2026-10-27",
+        "contractId": "c1",
+        "date": "2026-10-27",
+        "type": "cp"
+      },
+      {
+        "key": "c1|2026-10-28",
+        "contractId": "c1",
+        "date": "2026-10-28",
+        "type": "cp"
+      },
+      {
+        "key": "c1|2026-10-29",
+        "contractId": "c1",
+        "date": "2026-10-29",
+        "type": "cp"
+      }
+    ],
+    "months": [
+      {
+        "key": "c1|2026-09",
+        "year": 2026,
+        "month": 9,
+        "rate": 5.5,
+        "indem": 7,
+        "hpd": 9,
+        "hsup": 2,
+        "unpaid": 0,
+        "cp": [
+          "2026-09-30"
+        ],
+        "abs": [],
+        "mensu": 18,
+        "heures": 164,
+        "salaire": 902,
+        "accueil": 17,
+        "entretien": 119,
+        "total": 1021,
+        "cpOuvres": 1,
+        "cpo": 1,
+        "contractId": "c1",
+        "status": "brouillon",
+        "copied": {}
+      },
+      {
+        "key": "c1|2026-10",
+        "contractId": "c1",
+        "year": 2026,
+        "month": 10,
+        "rate": 5.5,
+        "indem": 7,
+        "hpd": 9,
+        "hsup": 2,
+        "unpaid": 0,
+        "cp": [
+          "2026-10-01",
+          "2026-10-02",
+          "2026-10-23",
+          "2026-10-26",
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29"
+        ],
+        "abs": [],
+        "mensu": 22,
+        "heures": 200,
+        "salaire": 1100,
+        "accueil": 15,
+        "entretien": 105,
+        "total": 1205,
+        "cpOuvres": 7,
+        "cpo": 9,
+        "savedAt": "2026-10-31T09:00:01.002Z",
+        "status": "declare",
+        "copied": {
+          "heures": true
+        },
+        "declaredAt": "2026-10-31T09:00:01.002Z"
+      }
+    ],
+    "payments": [
+      {
+        "id": "p17934372313514rw1",
+        "contractId": "c1",
+        "monthKey": "c1|2026-09",
+        "date": "2026-10-01",
+        "amount": 971.5,
+        "kind": "versement",
+        "note": ""
+      },
+      {
+        "id": "p17934372314486tjg",
+        "contractId": "c1",
+        "monthKey": "c1|2026-09",
+        "date": "2026-10-31",
+        "amount": 49.5,
+        "kind": "regularisation",
+        "note": ""
+      }
+    ],
+    "leave_years": [
+      {
+        "key": "c1|2026",
+        "contractId": "c1",
+        "correction": 2
+      }
+    ],
+    "settings": {
+      "id": "main",
+      "migrated": true,
+      "createdAt": "2026-10-31",
+      "onboardingDone": true
+    }
+  }
+}
