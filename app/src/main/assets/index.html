@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Paie Assistante Maternelle</title>
+<style>
+/* Mise en page : une colonne de saisie, un calendrier tactile, puis deux blocs de résultat (récapitulatif / paie) et un panneau de partage.
+   Couleurs reprises du tableur : samedi bleu, dimanche rose, férié ambre, congé payé jaune. */
+:root{
+  --bg:#F3F5F9; --surface:#FFFFFF; --ink:#14213D; --muted:#5B6580; --line:#D9DFEA;
+  --accent:#1F3864; --accent-ink:#FFFFFF; --go:#3F7A38; --go-ink:#FFFFFF;
+  --sat:#BDD7EE; --sun:#F4B6B6; --hol:#FFC000; --on-hol:#1B1400;
+  --cp:#FFE45C; --on-cp:#1B1700; --abs:#E3E6EC; --focus:#2F6FDB; --total:#E4EAF6;
+  --font:system-ui,Roboto,"Segoe UI",sans-serif;
+  --mono:ui-monospace,"Roboto Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1626; --surface:#172036; --ink:#E8ECF5; --muted:#9AA6C0; --line:#2A3654;
+    --accent:#3C5FA8; --accent-ink:#FFFFFF; --go:#4E9A46; --go-ink:#FFFFFF;
+    --sat:#2B4764; --sun:#6A3441; --hol:#E0A800; --on-hol:#1B1400;
+    --cp:#E6CC3A; --on-cp:#1B1700; --abs:#2A3350; --focus:#7FA8FF; --total:#22305A;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1626; --surface:#172036; --ink:#E8ECF5; --muted:#9AA6C0; --line:#2A3654;
+  --accent:#3C5FA8; --accent-ink:#FFFFFF; --go:#4E9A46; --go-ink:#FFFFFF;
+  --sat:#2B4764; --sun:#6A3441; --hol:#E0A800; --on-hol:#1B1400;
+  --cp:#E6CC3A; --on-cp:#1B1700; --abs:#2A3350; --focus:#7FA8FF; --total:#22305A;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.45;
+  padding:16px 16px 40px}
+.wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font-size:22px;line-height:1.2;margin:0;font-weight:700;text-wrap:balance}
+.sub{color:var(--muted);margin:4px 0 0}
+h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 12px;color:var(--muted);font-weight:600}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.grid{display:grid;gap:12px 16px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+input,select,button,textarea{font:inherit;color:var(--ink)}
+input,select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0;width:100%}
+input[type=number]{font-family:var(--mono)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.row>label{flex:1 1 130px}
+button{cursor:pointer;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:8px 12px;min-height:38px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:var(--bg);padding:8px 14px}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.cal-head{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;margin-bottom:12px}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.dow{text-align:center;font-size:12px;color:var(--muted);font-weight:600;padding-bottom:2px}
+.day{position:relative;aspect-ratio:1/0.9;min-height:44px;padding:0;border-radius:6px;border:1px solid var(--line);background:var(--surface);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;font-family:var(--mono);font-weight:600;font-size:14px}
+.day small{font-family:var(--font);font-size:10px;font-weight:600;line-height:1}
+.day.sat{background:var(--sat)} .day.sun{background:var(--sun)}
+.day.hol{background:var(--hol);color:var(--on-hol)}
+.day.cp{background:var(--cp);color:var(--on-cp);border-color:transparent}
+.day.abs{background:var(--abs);color:var(--muted);text-decoration:line-through}
+.day.off{opacity:.45}
+.day.cpo{box-shadow:inset 0 0 0 2px var(--ink)}
+.day:disabled{cursor:default}
+.blank{visibility:hidden}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:12px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;border:1px solid var(--line);vertical-align:-2px;margin-right:5px}
+.cols{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+.tbl{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tbl .th{background:var(--accent);color:var(--accent-ink);font-weight:600;padding:8px 12px}
+.tr{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;border-top:1px solid var(--line)}
+.tr:first-of-type{border-top:0}
+.tr span:last-child{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.tr.total{background:var(--total);font-weight:700}
+.tr.total span:last-child{font-size:17px}
+.hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+.share{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.share a,.share button{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border-radius:6px;padding:9px 14px;min-height:40px;font-weight:600;border:1px solid var(--line);color:var(--ink);background:var(--surface)}
+.share a.wa{background:var(--go);color:var(--go-ink);border-color:transparent}
+textarea{font-family:var(--mono);font-size:13px;min-height:190px;resize:vertical;line-height:1.5}
+.ok{color:var(--go);font-weight:600;min-height:1.4em;margin:8px 0 0;font-size:13px}
+@media (prefers-reduced-motion:no-preference){button{transition:background .12s}}
+
+.hist{display:flex;flex-direction:column;gap:8px}
+.hrow{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.hrow b{font-family:var(--mono)}
+.hrow .meta{display:flex;flex-direction:column;gap:2px;min-width:0}
+.hrow .meta small{color:var(--muted)}
+.hrow .btns{display:flex;gap:8px}
+.empty{color:var(--muted);margin:0}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Paie Assistante Maternelle</h1>
+    <p class="sub">Choisis le mois et les tarifs, marque les congés payés : jours ouvrés, jours ouvrables (CPO) et montant à verser sont calculés. Les données restent sur ce téléphone.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="h-par">
+    <h2 id="h-par">Paramètres</h2>
+    <div class="grid">
+      <label for="month">Mois<select id="month"></select></label>
+      <label for="year">Année<input id="year" type="number" min="2024" max="2100" step="1" inputmode="numeric"></label>
+      <label for="rate">Taux horaire net (€/h)<input id="rate" type="number" min="0" step="0.01" inputmode="decimal"></label>
+      <label for="indem">Indemnité d'entretien (€/jour d'accueil)<input id="indem" type="number" min="0" step="0.01" inputmode="decimal"></label>
+      <label for="hpd">Heures par jour<input id="hpd" type="number" min="0" step="0.5" inputmode="decimal"></label>
+      <label for="hsup">Heures en plus par mois<input id="hsup" type="number" min="0" step="0.5" inputmode="decimal"></label>
+      <label for="start">Début du contrat<input id="start" type="date"></label>
+      <label for="unpaid">Jours ouvrés non rémunérés (ce mois)<input id="unpaid" type="number" min="0" step="1" inputmode="numeric"></label>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-cal">
+    <h2 id="h-cal">Calendrier du mois</h2>
+    <div class="cal-head">
+      <div class="seg" role="group" aria-label="Ce que le clic marque">
+        <button type="button" id="mode-cp" aria-pressed="true">Congé payé</button>
+        <button type="button" id="mode-abs" aria-pressed="false">Enfant absent</button>
+      </div>
+      <button type="button" id="clear">Effacer le mois</button>
+    </div>
+    <div class="cal" id="cal" role="group" aria-label="Jours du mois"></div>
+    <div class="legend">
+      <span><i style="background:var(--cp)"></i>Congé payé</span>
+      <span><i style="background:var(--sat)"></i>Samedi</span>
+      <span><i style="background:var(--sun)"></i>Dimanche</span>
+      <span><i style="background:var(--hol)"></i>Jour férié</span>
+      <span><i style="background:var(--abs)"></i>Enfant absent</span>
+      <span><i style="background:var(--surface);box-shadow:inset 0 0 0 2px var(--ink)"></i>Compté en CPO</span>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <label for="leave-from">Ajouter des congés à partir du<input id="leave-from" type="date"></label>
+      <label for="leave-n">Nombre de jours ouvrés<input id="leave-n" type="number" min="1" max="60" step="1" value="1" inputmode="numeric"></label>
+      <button type="button" class="primary" id="leave-add">Ajouter</button>
+    </div>
+    <p class="hint">Un clic sur un jour ouvré le marque ou le démarque. Le samedi passe en CPO tout seul quand le vendredi précédent est en congé. Les jours avant le début du contrat, les week-ends et les fériés ne se marquent pas.</p>
+  </section>
+
+  <section aria-labelledby="h-res">
+    <h2 id="h-res" style="margin-bottom:8px">Résultat</h2>
+    <div class="cols">
+      <div class="tbl" id="recap"></div>
+      <div class="tbl" id="pay"></div>
+    </div>
+    <div class="bar">
+      <button type="button" class="primary" id="save-month">Enregistrer ce mois</button>
+      <span class="ok" id="saved" role="status" style="margin:0"></span>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-hist">
+    <h2 id="h-hist">Mois enregistrés</h2>
+    <div class="hist" id="hist"><p class="empty">Aucun mois enregistré pour le moment.</p></div>
+    <p class="hint" id="dbnote"></p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-sh">
+    <h2 id="h-sh">Partager le résultat</h2>
+    <label for="msg">Message (modifiable avant l'envoi)<textarea id="msg"></textarea></label>
+    <div class="share">
+      <button type="button" class="primary" id="s-native" hidden>Partager…</button>
+      <a class="wa" id="s-wa" href="#">WhatsApp</a>
+      <a id="s-tg" href="#">Telegram</a>
+      <a id="s-mail" href="#">E-mail</a>
+      <button type="button" id="s-copy">Copier le message</button>
+    </div>
+    <p class="ok" id="copied" role="status"></p>
+  </section>
+</div>
+
+<script>
+// <pure>
+const MONTHS=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+const pad=n=>String(n).padStart(2,"0");
+const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parseISO=s=>{const p=s.split("-").map(Number);return new Date(p[0],p[1]-1,p[2]);};
+const addDays=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+const dow=d=>(d.getDay()+6)%7+1; // 1 = lundi … 7 = dimanche
+function easter(y){
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),
+        g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,
+        l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+        mo=Math.floor((h+l-7*m+114)/31),da=(h+l-7*m+114)%31+1;
+  return new Date(y,mo-1,da);
+}
+const holCache={};
+function holidays(y){
+  if(holCache[y])return holCache[y];
+  const E=easter(y),h={};
+  [[1,1,"Jour de l'An"],[5,1,"Fête du Travail"],[5,8,"Victoire 1945"],[7,14,"Fête nationale"],
+   [8,15,"Assomption"],[11,1,"Toussaint"],[11,11,"Armistice 1918"],[12,25,"Noël"]]
+   .forEach(x=>{h[iso(new Date(y,x[0]-1,x[1]))]=x[2];});
+  h[iso(addDays(E,1))]="Lundi de Pâques"; h[iso(addDays(E,39))]="Ascension"; h[iso(addDays(E,50))]="Lundi de Pentecôte";
+  return holCache[y]=h;
+}
+function flags(d,s){
+  const k=iso(d),w=dow(d),hol=holidays(d.getFullYear())[k]||"";
+  const active=k>=s.start, ouvre=active&&w<=5&&!hol, ouvrable=active&&w<=6&&!hol;
+  const cp=s.cp.has(k)&&ouvre;
+  const prevCp=w===6&&s.cp.has(iso(addDays(d,-1)))&&holidays(addDays(d,-1).getFullYear())[iso(addDays(d,-1))]===undefined;
+  const cpo=ouvrable&&(cp||prevCp);
+  const abs=s.abs.has(k)&&ouvre&&!cp;
+  return {d,k,w,hol,active,ouvre,ouvrable,cp,abs,cpo,trav:ouvre&&!cp,accueil:ouvre&&!cp&&!abs};
+}
+function compute(s){
+  const n=new Date(s.year,s.month,0).getDate(), days=[];
+  for(let i=1;i<=n;i++)days.push(flags(new Date(s.year,s.month-1,i),s));
+  const sum=f=>days.reduce((a,x)=>a+(f(x)?1:0),0);
+  const r={days,feries:sum(x=>!!x.hol),trav:sum(x=>x.trav),ouvres:sum(x=>x.ouvre),ouvrables:sum(x=>x.ouvrable),
+           cpOuvres:sum(x=>x.cp),cpo:sum(x=>x.cpo),accueil:sum(x=>x.accueil)};
+  let cum=0; const end=new Date(s.year,s.month,0);
+  for(let d=parseISO(s.start),g=0;d<=end&&g<4000;d=addDays(d,1),g++)if(flags(d,s).cpo)cum++;
+  r.cumCpo=cum;
+  r.mensu=Math.max(0,r.ouvres-s.unpaid);
+  r.heures=r.mensu>0?r.mensu*s.hpd+s.hsup:0;
+  r.salaire=Math.round(r.heures*s.rate*100)/100;
+  r.entretien=Math.round(r.accueil*s.indem*100)/100;
+  r.total=Math.round((r.salaire+r.entretien)*100)/100;
+  return r;
+}
+// </pure>
+
+const $=id=>document.getElementById(id);
+const fmtEUR=new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"});
+const fmtN=(v,dec)=>new Intl.NumberFormat("fr-FR",{minimumFractionDigits:dec,maximumFractionDigits:dec}).format(v);
+const eur=v=>fmtEUR.format(v);
+
+/* ---------- Base de données locale (IndexedDB, stockée sur le téléphone) ---------- */
+const DB={db:null,
+  open(){return new Promise((res,rej)=>{
+    if(!window.indexedDB)return rej(new Error("no idb"));
+    const r=indexedDB.open("paie-assmat",1);
+    r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore("state");d.createObjectStore("months",{keyPath:"key"});};
+    r.onsuccess=()=>{DB.db=r.result;res();};r.onerror=()=>rej(r.error);});},
+  tx(store,mode,fn){return new Promise((res,rej)=>{
+    if(!DB.db)return rej(new Error("db closed"));
+    const t=DB.db.transaction(store,mode),o=t.objectStore(store),q=fn(o);
+    t.oncomplete=()=>res(q&&q.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error);});},
+  get(store,key){return DB.tx(store,"readonly",o=>o.get(key));},
+  put(store,val,key){return DB.tx(store,"readwrite",o=>key===undefined?o.put(val):o.put(val,key));},
+  all(store){return DB.tx(store,"readonly",o=>o.getAll());},
+  del(store,key){return DB.tx(store,"readwrite",o=>o.delete(key));}
+};
+
+const DEF={year:2026,month:10,rate:5.5,indem:7,hpd:9,hsup:2,start:"2026-09-07"};
+const S={...DEF,unp:{},cp:new Set(),abs:new Set()};
+let mode="cp",msgEdited=false,dbOK=false;
+const mkey=()=>S.year+"-"+pad(S.month);
+const view=()=>({...S,unpaid:S.unp[mkey()]||0});
+
+function persist(){
+  if(!dbOK)return;
+  DB.put("state",{year:S.year,month:S.month,rate:S.rate,indem:S.indem,hpd:S.hpd,hsup:S.hsup,start:S.start,
+    unp:S.unp,cp:[...S.cp],abs:[...S.abs]},"main").catch(()=>{$("dbnote").textContent="Impossible d'écrire dans la base du téléphone.";});
+}
+
+MONTHS.forEach((m,i)=>{const o=document.createElement("option");o.value=i+1;o.textContent=m[0].toUpperCase()+m.slice(1);$("month").appendChild(o);});
+function toForm(){
+  $("month").value=S.month;$("year").value=S.year;$("rate").value=S.rate;$("indem").value=S.indem;
+  $("hpd").value=S.hpd;$("hsup").value=S.hsup;$("start").value=S.start;$("unpaid").value=S.unp[mkey()]||0;
+  $("leave-from").value=S.year+"-"+pad(S.month)+"-01";
+}
+function num(id,fallback){const v=parseFloat($(id).value);return isFinite(v)&&v>=0?v:fallback;}
+function fromForm(){
+  S.month=parseInt($("month").value,10)||S.month;
+  const y=parseInt($("year").value,10);if(y>=2000&&y<=2200)S.year=y;
+  S.rate=num("rate",S.rate);S.indem=num("indem",S.indem);S.hpd=num("hpd",S.hpd);S.hsup=num("hsup",S.hsup);
+  if($("start").value)S.start=$("start").value;
+  S.unp[mkey()]=Math.floor(num("unpaid",S.unp[mkey()]||0));
+}
+
+function row(l,v,cls){return '<div class="tr'+(cls?" "+cls:"")+'"><span>'+l+'</span><span>'+v+'</span></div>';}
+function message(r,V){
+  const L=["Paie assistante maternelle – "+MONTHS[V.month-1]+" "+V.year,"",
+    "Jours mensualisés : "+r.mensu,
+    "Heures normales : "+fmtN(r.heures,1)+" h × "+fmtN(V.rate,2)+" €/h",
+    "Salaire net : "+eur(r.salaire),
+    "Entretien : "+r.accueil+" j × "+fmtN(V.indem,2)+" € = "+eur(r.entretien),
+    "TOTAL À VERSER : "+eur(r.total),"",
+    "Congés payés : "+r.cpOuvres+" j ouvrés, "+r.cpo+" j ouvrables (CPO)"];
+  if(r.feries)L.push("Jours fériés : "+r.feries);
+  if(V.unpaid)L.push("Jours non rémunérés : "+V.unpaid);
+  return L.join("\n").replace(/[\u202f\u00a0]/g," ");
+}
+function updateShare(){
+  const t=$("msg").value,q=encodeURIComponent(t);
+  $("s-wa").href="https://wa.me/?text="+q;
+  $("s-tg").href="https://t.me/share/url?url="+encodeURIComponent(" ")+"&text="+q;
+  $("s-mail").href="mailto:?subject="+encodeURIComponent("Paie assistante maternelle – "+MONTHS[S.month-1]+" "+S.year)+"&body="+q;
+}
+function render(){
+  const V=view(),r=compute(V);
+  const cal=$("cal");cal.innerHTML="";
+  ["L","Ma","Me","J","V","S","D"].forEach(x=>{const e=document.createElement("div");e.className="dow";e.textContent=x;cal.appendChild(e);});
+  for(let i=1;i<r.days[0].w;i++){const e=document.createElement("div");e.className="blank";cal.appendChild(e);}
+  r.days.forEach(f=>{
+    const b=document.createElement("button");b.type="button";
+    const cls=[];
+    if(f.hol)cls.push("hol");else if(f.w===7)cls.push("sun");else if(f.w===6)cls.push("sat");
+    if(f.cp)cls.push("cp");if(f.abs)cls.push("abs");if(f.cpo)cls.push("cpo");if(!f.active)cls.push("off");
+    b.className="day "+cls.join(" ");
+    b.innerHTML=f.d.getDate()+(f.cp?"<small>CP</small>":f.hol?"<small>férié</small>":f.abs?"<small>abs</small>":f.cpo?"<small>CPO</small>":"");
+    b.title=f.hol||"";b.disabled=!f.ouvre;
+    b.setAttribute("aria-label",f.d.getDate()+" "+MONTHS[S.month-1]+(f.hol?", "+f.hol:"")+(f.cp?", congé payé":"")+(f.abs?", enfant absent":"")+(f.cpo&&!f.cp?", compté en CPO":""));
+    if(f.ouvre)b.addEventListener("click",()=>{
+      const set=mode==="cp"?S.cp:S.abs;
+      if(set.has(f.k))set.delete(f.k);else{set.add(f.k);if(mode==="cp")S.abs.delete(f.k);}
+      commit();
+    });
+    cal.appendChild(b);
+  });
+  $("recap").innerHTML='<div class="th">Récapitulatif — '+MONTHS[S.month-1]+" "+S.year+"</div>"+
+    row("Jours fériés",r.feries)+row("Jours travaillés",r.trav)+row("Jours ouvrés",r.ouvres)+row("Jours ouvrables",r.ouvrables)+
+    row("CP en jours ouvrés",r.cpOuvres)+row("CP ouvrables (CPO)",r.cpo)+row("Cumul CPO depuis le début du contrat","<b>"+r.cumCpo+"</b>");
+  $("pay").innerHTML='<div class="th">Calcul de la paie du mois</div>'+
+    row("Taux horaire net",eur(V.rate))+row("Heures par jour",fmtN(V.hpd,1))+row("Heures en plus par mois",fmtN(V.hsup,1))+
+    row("Indemnité d'entretien (€/jour)",eur(V.indem))+row("Jours ouvrés non rémunérés",V.unpaid)+
+    row("Jours mensualisés (Pajemploi)",r.mensu)+row("Heures normales (Pajemploi)",fmtN(r.heures,1))+
+    row("Salaire net",eur(r.salaire))+row("Jours d'accueil réel (enfant présent)",r.accueil)+
+    row("Indemnité d'entretien",eur(r.entretien))+row("TOTAL À VERSER",eur(r.total),"total");
+  if(!msgEdited)$("msg").value=message(r,V);
+  updateShare();
+  render.last=r;
+}
+function commit(){persist();render();}
+function refreshAfterParam(){fromForm();msgEdited=false;$("unpaid").value=S.unp[mkey()]||0;$("leave-from").value=S.year+"-"+pad(S.month)+"-01";$("saved").textContent="";commit();}
+
+/* ---------- Mois enregistrés ---------- */
+async function loadHistory(){
+  const box=$("hist");
+  if(!dbOK){box.innerHTML='<p class="empty">Base locale indisponible : les mois ne peuvent pas être enregistrés.</p>';return;}
+  let list=[];try{list=await DB.all("months");}catch(e){}
+  list.sort((a,b)=>a.key<b.key?1:-1);
+  if(!list.length){box.innerHTML='<p class="empty">Aucun mois enregistré pour le moment.</p>';return;}
+  box.innerHTML="";
+  list.forEach(m=>{
+    const d=document.createElement("div");d.className="hrow";
+    d.innerHTML='<div class="meta"><span>'+MONTHS[m.month-1]+" "+m.year+'</span><small>'+m.mensu+" j · "+fmtN(m.heures,1)+" h · CPO "+m.cpo+'</small></div><b>'+eur(m.total)+'</b><div class="btns"><button type="button">Ouvrir</button><button type="button">Supprimer</button></div>';
+    const bs=d.querySelectorAll("button");
+    bs[0].addEventListener("click",()=>{
+      S.year=m.year;S.month=m.month;S.rate=m.rate;S.indem=m.indem;S.hpd=m.hpd;S.hsup=m.hsup;S.unp[m.key]=m.unpaid;
+      const pre=m.key+"-";[...S.cp].forEach(k=>{if(k.startsWith(pre))S.cp.delete(k);});[...S.abs].forEach(k=>{if(k.startsWith(pre))S.abs.delete(k);});
+      m.cp.forEach(k=>S.cp.add(k));m.abs.forEach(k=>S.abs.add(k));
+      msgEdited=false;toForm();commit();window.scrollTo({top:0,behavior:"smooth"});
+    });
+    bs[1].addEventListener("click",async()=>{try{await DB.del("months",m.key);}catch(e){}loadHistory();});
+    box.appendChild(d);
+  });
+}
+$("save-month").addEventListener("click",async()=>{
+  const V=view(),r=compute(V),pre=mkey()+"-";
+  const rec={key:mkey(),year:S.year,month:S.month,rate:S.rate,indem:S.indem,hpd:S.hpd,hsup:S.hsup,unpaid:V.unpaid,
+    cp:[...S.cp].filter(k=>k.startsWith(pre)),abs:[...S.abs].filter(k=>k.startsWith(pre)),
+    mensu:r.mensu,heures:r.heures,salaire:r.salaire,accueil:r.accueil,entretien:r.entretien,total:r.total,
+    cpOuvres:r.cpOuvres,cpo:r.cpo,savedAt:new Date().toISOString()};
+  try{await DB.put("months",rec);$("saved").textContent="Enregistré sur le téléphone.";loadHistory();}
+  catch(e){$("saved").textContent="Échec de l'enregistrement.";}
+  setTimeout(()=>{$("saved").textContent="";},3500);
+});
+
+["month","year","rate","indem","hpd","hsup","start","unpaid"].forEach(id=>{
+  $(id).addEventListener("input",()=>{fromForm();msgEdited=false;commit();});
+  $(id).addEventListener("change",refreshAfterParam);
+});
+$("msg").addEventListener("input",()=>{msgEdited=true;updateShare();});
+$("mode-cp").addEventListener("click",()=>{mode="cp";$("mode-cp").setAttribute("aria-pressed","true");$("mode-abs").setAttribute("aria-pressed","false");});
+$("mode-abs").addEventListener("click",()=>{mode="abs";$("mode-abs").setAttribute("aria-pressed","true");$("mode-cp").setAttribute("aria-pressed","false");});
+$("clear").addEventListener("click",()=>{
+  const pre=mkey()+"-";
+  [...S.cp].forEach(k=>{if(k.startsWith(pre))S.cp.delete(k);});
+  [...S.abs].forEach(k=>{if(k.startsWith(pre))S.abs.delete(k);});
+  msgEdited=false;commit();
+});
+$("leave-add").addEventListener("click",()=>{
+  const v=$("leave-from").value;if(!v)return;
+  let n=Math.max(1,Math.min(60,parseInt($("leave-n").value,10)||1)),d=parseISO(v);const V=view();
+  for(let g=0;n>0&&g<400;g++,d=addDays(d,1)){const f=flags(d,V);if(f.ouvre){S.cp.add(f.k);S.abs.delete(f.k);n--;}}
+  msgEdited=false;commit();
+});
+$("s-copy").addEventListener("click",async()=>{
+  const t=$("msg").value,ok=m=>{$("copied").textContent=m;setTimeout(()=>{$("copied").textContent="";},3000);};
+  try{await navigator.clipboard.writeText(t);ok("Message copié.");}
+  catch(e){$("msg").focus();$("msg").select();ok("Message sélectionné : copie-le avec le menu de ton appareil.");}
+});
+if(window.Android&&window.Android.share){
+  $("s-native").hidden=false;
+  $("s-native").addEventListener("click",()=>window.Android.share($("msg").value));
+}
+
+(async()=>{
+  try{
+    await DB.open();dbOK=true;
+    const st=await DB.get("state","main");
+    if(st){
+      ["year","month","rate","indem","hpd","hsup","start"].forEach(k=>{if(st[k]!==undefined&&st[k]!=="")S[k]=st[k];});
+      if(st.unp)S.unp=st.unp;if(Array.isArray(st.cp))S.cp=new Set(st.cp);if(Array.isArray(st.abs))S.abs=new Set(st.abs);
+    }else{
+      // première ouverture : congés déjà connus de septembre et octobre 2026
+      ["2026-09-30","2026-10-01","2026-10-02","2026-10-23","2026-10-26","2026-10-27","2026-10-28","2026-10-29"].forEach(k=>S.cp.add(k));
+      persist();
+    }
+  }catch(e){dbOK=false;$("dbnote").textContent="Base locale indisponible : les données ne seront pas conservées.";
+    ["2026-09-30","2026-10-01","2026-10-02","2026-10-23","2026-10-26","2026-10-27","2026-10-28","2026-10-29"].forEach(k=>S.cp.add(k));}
+  toForm();render();loadHistory();
+})();
+
+</script>
+</body>
+</html>
