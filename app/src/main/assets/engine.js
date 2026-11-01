@@ -138,6 +138,34 @@
     return { ecart: ecart, status: ecart > 0.004 ? 'a_verser' : (ecart < -0.004 ? 'trop_percu' : 'regle') };
   }
 
+  /* ---------- Vue annuelle (F6) ----------
+     months : enregistrements du store `months` ; payments : store `payments` ; start : début du contrat (ISO) ou ''.
+     Ne lit que les mois enregistrés. Versé annuel = paiements datés de l'année ; versé d'une ligne = paiements du mois (monthKey). */
+  function yearSummary(months, payments, year, start) {
+    var rows = [], t = { mensu: 0, heures: 0, salaire: 0, entretien: 0, total: 0 };
+    var byKey = {}, paidBy = {}, rec = 0, unrec = 0, before = 0, cpo = 0, m;
+    (months || []).forEach(function (x) { if (x && x.year === year) byKey[x.month] = x; });
+    (payments || []).forEach(function (p) { paidBy[p.monthKey] = (paidBy[p.monthKey] || 0) + p.amount; });
+    var startYM = start ? start.slice(0, 7) : '';
+    for (m = 1; m <= 12; m++) {
+      var ym = year + '-' + pad(m), r = byKey[m], row = { month: m, ym: ym };
+      if (r) {
+        var paid = round2(paidBy[r.key] || 0);
+        row.status = 'enregistre'; row.key = r.key; row.mensu = r.mensu; row.heures = r.heures; row.salaire = r.salaire;
+        row.entretien = r.entretien; row.total = r.total; row.paid = paid; row.ecart = round2(r.total - paid);
+        Object.keys(t).forEach(function (k) { t[k] += r[k]; });
+        cpo += r.cpo || 0; rec++;
+      } else if (startYM && ym < startYM) { row.status = 'avant_contrat'; before++; }
+      else { row.status = 'non_enregistre'; unrec++; }
+      rows.push(row);
+    }
+    Object.keys(t).forEach(function (k) { t[k] = round2(t[k]); });
+    var paidYear = round2((payments || []).filter(function (p) { return typeof p.date === 'string' && p.date.slice(0, 4) === String(year); })
+      .reduce(function (a, p) { return a + p.amount; }, 0));
+    return { year: year, rows: rows, totals: t, recorded: rec, unrecorded: unrec, beforeContract: before, paid: paidYear,
+      ecart: round2(t.total - paidYear), cpo: cpo };
+  }
+
   /* ---------- Validation du profil (F0) ---------- */
   function pastDate(s, today) { return isISODate(s) && s < today; }
 
@@ -210,7 +238,7 @@
     SCHEMA_VERSION: SCHEMA_VERSION, STORES: STORES, MONTHS: MONTHS, pad: pad, iso: iso, parseISO: parseISO, addDays: addDays,
     dow: dow, round2: round2, daysBetween: daysBetween, isISODate: isISODate, easter: easter, holidays: holidays,
     flags: flags, computeMonth: computeMonth, refPeriod: refPeriod, leaveRights: leaveRights, groupPeriods: groupPeriods,
-    paymentStatus: paymentStatus, validateProfile: validateProfile, validateChild: validateChild,
+    paymentStatus: paymentStatus, yearSummary: yearSummary, validateProfile: validateProfile, validateChild: validateChild,
     validateContract: validateContract, buildExport: buildExport, parseExport: parseExport
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.Engine;

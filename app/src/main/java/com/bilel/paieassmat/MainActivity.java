@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -24,9 +25,11 @@ import java.util.HashMap;
 public class MainActivity extends Activity {
     // Origine https propre à l'appli : IndexedDB y est stockée de façon durable dans les données de l'appli.
     private static final String HOST = "app.local";
-    private static final int REQ_EXPORT = 41, REQ_IMPORT = 42;
+    private static final int REQ_EXPORT = 41, REQ_IMPORT = 42, REQ_EXPORT_BIN = 43;
+    private static final int MAX_BIN = 5 * 1024 * 1024;
     private WebView web;
     private String pendingExport;
+    private byte[] pendingBinary;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,6 +111,17 @@ public class MainActivity extends Activity {
             }
             pendingExport = null;
             callJs("window.onExportResult(" + ok + ")");
+        } else if (req == REQ_EXPORT_BIN) {
+            boolean ok = false;
+            if (res == RESULT_OK && data != null && data.getData() != null && pendingBinary != null) {
+                try (OutputStream out = getContentResolver().openOutputStream(data.getData(), "wt")) {
+                    out.write(pendingBinary);
+                    ok = true;
+                } catch (Exception ignored) {
+                }
+            }
+            pendingBinary = null;
+            callJs("window.onBinaryExportResult(" + ok + ")");
         } else if (req == REQ_IMPORT) {
             String text = null;
             if (res == RESULT_OK && data != null && data.getData() != null) {
@@ -150,6 +164,33 @@ public class MainActivity extends Activity {
                     i.setType("application/json");
                     i.putExtra(Intent.EXTRA_TITLE, name);
                     startActivityForResult(i, REQ_EXPORT);
+                }
+            });
+        }
+
+        // PDF / PNG du récapitulatif (F10) : contenu en base64, écrit dans le document choisi par l'utilisateur.
+        @JavascriptInterface
+        public void exportBinary(final String name, final String mime, final String base64) {
+            byte[] bytes = null;
+            try {
+                bytes = Base64.decode(base64, Base64.DEFAULT);
+                if (bytes.length > MAX_BIN) bytes = null;
+            } catch (Exception ignored) {
+            }
+            if (bytes == null) {
+                callJs("window.onBinaryExportResult(false)");
+                return;
+            }
+            final byte[] data = bytes;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    pendingBinary = data;
+                    Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                    i.addCategory(Intent.CATEGORY_OPENABLE);
+                    i.setType("application/pdf".equals(mime) || "image/png".equals(mime) ? mime : "application/octet-stream");
+                    i.putExtra(Intent.EXTRA_TITLE, name);
+                    startActivityForResult(i, REQ_EXPORT_BIN);
                 }
             });
         }

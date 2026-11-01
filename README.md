@@ -22,6 +22,12 @@ mais sont supprimées si tu désinstalles l'appli ou si tu effaces ses données.
 
 Documentation et spécifications : voir [`docs/`](docs/README.md).
 
+## Version 1.5.0 — F10 récapitulatif PDF et image
+Boutons **Récapitulatif PDF** / **Récapitulatif image** sur l'écran Mois, **Récapitulatif annuel PDF / image** sur l'écran Année. PDF A4 d'une page (générateur maison, Helvetica intégrée) et PNG 1240 × 1754 issus de la même mise en page (`recap.js`). Aucune adresse, naissance ni coordonnée ; prénom de l'enfant seulement si l'option de partage est cochée ; nom de l'assistante maternelle saisi dans Réglages (facultatif). Fichier : web = téléchargement, Android = création de document (`Android.exportBinary`), iOS = feuille de partage. Format de sauvegarde inchangé (`schemaVersion` 2). **Non vérifié ici** : pont Android sur appareil, partage iOS sur appareil.
+
+## Version 1.4.0 — F6 vue annuelle
+Nouvel onglet **Année** : 12 mois de l'année civile, totaux (jours, heures, salaire, entretien, dû), versé, écart à verser, mois non enregistrés, CPO pris. Toucher un mois ouvre l'écran Mois. Aucun changement du format de sauvegarde (`schemaVersion` 2). Spécification : [`docs/specs/03-F6-F10-F12.md`](docs/specs/03-F6-F10-F12.md).
+
 ## Version 1.3.0 — multiplateforme, phases 2 (AppGallery) et 3 (iOS)
 
 **AppGallery (Huawei)** — APK release signé par notre propre clé, sans service Google ni permission réseau.

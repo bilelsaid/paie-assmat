@@ -1,8 +1,8 @@
 /* Service worker : pré-cache de l'appli pour le fonctionnement hors ligne (cible web uniquement).
    VERSION doit rester égale à APP_VERSION de platform.js (vérifié par tests/platform.test.js). */
-var VERSION = '1.3.0';
+var VERSION = '1.5.0';
 var CACHE = 'paie-assmat-' + VERSION;
-var FILES = ['./', 'index.html', 'style.css', 'engine.js', 'db.js', 'platform.js', 'app.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
+var FILES = ['./', 'index.html', 'style.css', 'engine.js', 'recap.js', 'db.js', 'platform.js', 'app.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FILES); }));

@@ -84,6 +84,12 @@
         FS.writeFile({ path: name, data: json, directory: 'CACHE', encoding: 'utf8' })
           .then(function (r) { return Share.share({ title: name, url: r.uri, dialogTitle: 'Enregistrer la sauvegarde' }); })
           .then(function () { win.onExportResult(true); }, function () { win.onExportResult(false); });
+      },
+      // PDF / PNG : écriture en cache (base64) puis feuille de partage ; résout true/false.
+      exportBlob: function (name, mime, b64) {
+        return FS.writeFile({ path: name, data: b64, directory: 'CACHE' })
+          .then(function (r) { return Share.share({ title: name, url: r.uri, dialogTitle: 'Partager le récapitulatif' }); })
+          .then(function () { return true; }, function () { return false; });
       }
     };
     out.share = {
