@@ -90,7 +90,7 @@ textarea{font-family:var(--mono);font-size:13px;min-height:190px;resize:vertical
 /* ---- v1.1 : navigation, onboarding, nouveaux écrans ---- */
 body{padding:0 0 76px}
 .wrap{padding:16px}
-.tabbar{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+.tabbar{position:fixed;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(6,1fr);background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
 .tabbar button{border:0;border-radius:0;background:transparent;min-height:56px;font-size:12px;color:var(--muted);padding:6px 2px}
 .tabbar button[aria-current=page]{color:var(--accent);font-weight:700;box-shadow:inset 0 3px 0 var(--accent)}
 .banner{background:var(--hol);color:var(--on-hol);padding:10px 16px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
@@ -112,6 +112,7 @@ label.chk input{width:auto}
 .pj:first-of-type{border-top:0}
 .pj .v{font-family:var(--mono);font-size:18px;font-weight:700}
 .pj .l{color:var(--muted);font-size:13px}
+.pj.yrow{width:100%;text-align:left;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;font:inherit;color:inherit}
 .pj .acts{display:flex;gap:10px;align-items:center;grid-column:1/-1}
 .overlay{position:fixed;inset:0;background:var(--bg);overflow:auto;z-index:20;padding:16px}
 .steps{display:flex;gap:6px;margin:8px 0 14px}

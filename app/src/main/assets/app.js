@@ -175,7 +175,7 @@
   function go(t) {
     tab = t;
     document.querySelectorAll('#tabs button').forEach(function (b) { b.removeAttribute('aria-current'); if (b.dataset.tab === t) b.setAttribute('aria-current', 'page'); });
-    ({ mois: sMois, saisir: sSaisir, conges: sConges, paiements: sPaiements, reglages: sReglages })[t]();
+    ({ mois: sMois, saisir: sSaisir, conges: sConges, paiements: sPaiements, annee: sAnnee, reglages: sReglages })[t]();
     window.scrollTo(0, 0);
     renderBanner();
   }
@@ -438,6 +438,36 @@
   }
 
   /* ---------- Réglages + sauvegarde (F4) ---------- */
+  /* ---------- Année (F6) ---------- */
+  var yearView = new Date().getFullYear();
+  function sAnnee() {
+    var y = E.yearSummary(Object.keys(S.months).map(function (k) { return S.months[k]; }), S.payments, yearView, C.start), f2 = function (v) { return fmtN(v, 2); };
+    var rowsHtml = y.rows.map(function (r) {
+      var name = cap(MONTHS[r.month - 1]);
+      if (r.status === 'avant_contrat') return '<div class="pj"><div><div class="l">' + name + '</div><div class="v">—</div></div><span class="badge">avant le contrat</span></div>';
+      if (r.status === 'non_enregistre') return '<button type="button" class="pj yrow" data-ym="' + r.ym + '"><div><div class="l">' + name + '</div><div class="v">—</div></div><span class="badge warn">non enregistré</span></button>';
+      return '<button type="button" class="pj yrow" data-ym="' + r.ym + '"><div><div class="l">' + name + ' — ' + r.mensu + ' j · ' + fmtN(r.heures, 1) + ' h · salaire ' + eur(r.salaire) + ' · entretien ' + eur(r.entretien) + '</div>' +
+        '<div class="v">' + eur(r.total) + '</div><div class="l">versé ' + eur(r.paid) + ' · écart ' + eur(r.ecart) + '</div></div><span class="badge ' + (r.ecart > 0.004 ? 'warn' : r.ecart < -0.004 ? 'bad' : 'ok') + '">' + (r.ecart > 0.004 ? 'À verser' : r.ecart < -0.004 ? 'Trop-perçu' : 'Réglé') + '</span></button>';
+    }).join('');
+    var body = y.recorded === 0
+      ? '<p class="hint" id="y-empty">Aucun mois enregistré en ' + y.year + '. Enregistre un mois depuis l\'écran Mois.</p>'
+      : '<div class="tbl" id="y-rows"><div class="th">Mois de ' + y.year + '</div>' + rowsHtml + '</div>' +
+        '<div class="tbl" id="y-tot"><div class="th">Total ' + y.year + '</div>' +
+        row('Jours mensualisés', y.totals.mensu + ' j') + row('Heures', fmtN(y.totals.heures, 1) + ' h') + row('Salaire net', eur(y.totals.salaire)) +
+        row('Entretien', eur(y.totals.entretien)) + row('Total dû', '<b>' + eur(y.totals.total) + '</b>', 'total') + row('Versé', eur(y.paid)) +
+        row('Écart à ' + (y.ecart >= 0 ? 'verser' : 'récupérer'), '<b>' + eur(Math.abs(y.ecart)) + '</b>') + '</div>' +
+        (y.unrecorded ? '<p class="hint" id="y-unrec">' + y.unrecorded + ' mois non enregistré' + (y.unrecorded > 1 ? 's' : '') + ' (non comptés dans les totaux).</p>' : '') +
+        '<section class="panel" id="y-cp"><h2>Congés</h2><p style="margin-top:0">' + y.cpo + ' jour' + (y.cpo > 1 ? 's' : '') + ' ouvrable' + (y.cpo > 1 ? 's' : '') + ' pris en ' + y.year +
+        '.</p><p class="hint">Les droits se calculent sur la période du 1er juin au 31 mai.</p><div class="bar"><button type="button" id="y-conges">Voir l\'écran Congés</button></div></section>';
+    $('screen').innerHTML = '<div class="stack"><header><h1>Année ' + y.year + '</h1><p class="sub">Totaux des mois enregistrés et versements de l\'année civile.</p></header>' +
+      '<div class="pager" style="margin-top:0"><button type="button" id="y-prev" aria-label="Année précédente">‹ ' + (y.year - 1) + '</button><button type="button" id="y-next" aria-label="Année suivante">' + (y.year + 1) + ' ›</button></div>' + body + '</div>';
+    $('y-prev').onclick = function () { yearView--; sAnnee(); };
+    $('y-next').onclick = function () { yearView++; sAnnee(); };
+    document.querySelectorAll('.yrow').forEach(function (b) {
+      b.onclick = function () { var p = b.dataset.ym.split('-'); S.year = Number(p[0]); S.month = Number(p[1]); go('mois'); };
+    });
+    if ($('y-conges')) $('y-conges').onclick = function () { go('conges'); };
+  }
   function sReglages() {
     var lb = ST.lastBackupAt ? 'Dernière sauvegarde : ' + fmtDate(ST.lastBackupAt.slice(0, 10)) : 'Aucune sauvegarde effectuée.';
     $('screen').innerHTML = '<div class="stack"><header><h1>Réglages</h1></header>' +

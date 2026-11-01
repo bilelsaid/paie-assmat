@@ -2,7 +2,7 @@
    app.js n'appelle que cette interface ; une coquille native ajoute son implémentation ici. */
 (function (root) {
   'use strict';
-  var APP_VERSION = '1.3.0';
+  var APP_VERSION = '1.4.0';
   var A = root.Android || null;
   var cap = root.Capacitor && root.Capacitor.isNativePlatform && root.Capacitor.isNativePlatform() && root.Capacitor.getPlatform && root.Capacitor.getPlatform() === 'ios';
   var P = { APP_VERSION: APP_VERSION, target: A ? 'android' : (cap ? 'ios' : 'web') };
