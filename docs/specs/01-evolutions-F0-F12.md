@@ -64,7 +64,7 @@ Cinq évolutions sont indispensables pour la v1.1 (F0 à F4), toutes pour le seu
 | F7 | Tarifs datés (avenants) et mois partiels | Important | M | **Not done** (partiel : un mois enregistré garde son tarif) |
 | F8 | Plusieurs contrats ou enfants | Souhaitable | L | **Not done** |
 | F9 | Rappels par notification locale | Souhaitable | S | **Not done** (le bandeau de rappel après 30 jours de F4 existe) |
-| F10 | Récapitulatif en PDF ou image | Souhaitable | M | **Not done** (spécifiée : [03](03-F6-F10-F12.md), PDF et image livrés ensemble) |
+| F10 | Récapitulatif en PDF ou image | Souhaitable | M | **Done** v1.5.0 (spécifiée : [03](03-F6-F10-F12.md), PDF et image livrés ensemble ; pont Android et partage iOS non vérifiés sur appareil) |
 | F11 | Verrouillage par empreinte ou code | Souhaitable | S | **Not done** |
 | F12 | Estimation du reste à charge (CMG) | Écartée (2026-11-01) | L | **Not done**, mise de côté : la formule exige les ressources du foyer (contenu conservé dans [03](03-F6-F10-F12.md)) |
 

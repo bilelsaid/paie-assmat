@@ -112,6 +112,7 @@ label.chk input{width:auto}
 .pj:first-of-type{border-top:0}
 .pj .v{font-family:var(--mono);font-size:18px;font-weight:700}
 .pj .l{color:var(--muted);font-size:13px}
+.pj.before{padding:5px 12px}
 .pj.yrow{width:100%;text-align:left;border:0;border-top:1px solid var(--line);border-radius:0;background:transparent;font:inherit;color:inherit}
 .pj .acts{display:flex;gap:10px;align-items:center;grid-column:1/-1}
 .overlay{position:fixed;inset:0;background:var(--bg);overflow:auto;z-index:20;padding:16px}

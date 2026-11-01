@@ -81,18 +81,19 @@
   var val = function (id) { var e = $(id); return e ? e.value.trim() : ''; };
   var numv = function (id) { var s = val(id).replace(',', '.'); return s === '' ? NaN : parseFloat(s); };
 
-  function parentForm(p) {
+  function parentForm(p, withNanny) {
     p = p || {};
     return '<div class="grid">' + fld('p-nom', 'Nom', p.nom, { req: 1, attrs: 'autocomplete="family-name"' }) + fld('p-prenom', 'Prénom', p.prenom, { req: 1, attrs: 'autocomplete="given-name"' }) +
       fld('p-naissance', 'Date de naissance', p.naissance, { type: 'date' }) + fld('p-adresse', 'Adresse', p.adresse) +
       fld('p-cp', 'Code postal', p.codePostal, { attrs: 'inputmode="numeric" maxlength="5"' }) + fld('p-ville', 'Ville', p.ville) +
       fld('p-email', 'E-mail', p.email, { type: 'email' }) + fld('p-tel', 'Téléphone', p.telephone, { type: 'tel' }) +
       sel('p-lien', 'Lien avec l\'enfant', p.lien, [['', '—'], ['pere', 'Père'], ['mere', 'Mère']]) +
-      sel('p-vivents', 'Les deux parents vivent avec l\'enfant', p.vivents, [['', '—'], ['oui', 'Oui'], ['non', 'Non']]) + '</div>';
+      sel('p-vivents', 'Les deux parents vivent avec l\'enfant', p.vivents, [['', '—'], ['oui', 'Oui'], ['non', 'Non']]) +
+      (withNanny ? fld('p-nanny', "Nom de l'assistante maternelle (affiché sur les récapitulatifs)", p.nannyName, { attrs: 'maxlength="80" autocomplete="off"' }) : '') + '</div>';
   }
   function readParent() {
     return { id: 'main', nom: val('p-nom'), prenom: val('p-prenom'), naissance: val('p-naissance'), adresse: val('p-adresse'),
-      codePostal: val('p-cp'), ville: val('p-ville'), email: val('p-email'), telephone: val('p-tel'), lien: val('p-lien'), vivents: val('p-vivents') };
+      codePostal: val('p-cp'), ville: val('p-ville'), email: val('p-email'), telephone: val('p-tel'), lien: val('p-lien'), vivents: val('p-vivents'), nannyName: $('p-nanny') ? val('p-nanny') : ((P && P.nannyName) || '') };
   }
   function childForm(c) {
     c = c || {};
@@ -242,7 +243,7 @@
       '<div class="legend"><span><i style="background:var(--cp)"></i>Congé payé</span><span><i style="background:var(--sat)"></i>Samedi</span><span><i style="background:var(--sun)"></i>Dimanche</span><span><i style="background:var(--hol)"></i>Jour férié</span><span><i style="background:var(--abs)"></i>Enfant absent</span><span><i style="background:var(--surface);box-shadow:inset 0 0 0 2px var(--ink)"></i>Compté en CPO</span></div>' +
       '<div class="row" style="margin-top:14px"><label for="leave-from">Ajouter des congés à partir du<input id="leave-from" type="date"></label><label for="leave-n">Nombre de jours ouvrés<input id="leave-n" type="number" min="1" max="60" step="1" value="1" inputmode="numeric"></label><button type="button" class="primary" id="leave-add">Ajouter</button></div></section>' +
       '<section id="result-sec"><h2 style="margin-bottom:8px">Résultat</h2><div class="cols"><div class="tbl" id="recap"></div><div class="tbl" id="pay"></div></div>' +
-      '<div class="bar"><button type="button" class="primary" id="save-month">Enregistrer ce mois</button><span class="ok" id="saved" role="status" style="margin:0"></span>' + (Platform.canPrint ? '<button type="button" id="print-month">Imprimer</button>' : '') + '</div></section></div>' +
+      '<div class="bar"><button type="button" class="primary" id="save-month">Enregistrer ce mois</button><span class="ok" id="saved" role="status" style="margin:0"></span>' + '<button type="button" id="pdf-month">Récapitulatif PDF</button><button type="button" id="png-month">Récapitulatif image</button>' + (Platform.canPrint ? '<button type="button" id="print-month">Imprimer</button>' : '') + '</div><p class="ok" id="recap-msg" role="status"></p></section></div>' +
       '<section class="panel"><h2>Mois enregistrés</h2><div class="hist" id="hist"></div><p class="hint" id="dbnote"></p></section>' +
       '<section class="panel" id="share-panel"><h2>Partager le résultat</h2><label for="msg">Message (modifiable avant l\'envoi)<textarea id="msg"></textarea></label><div class="share"><button type="button" class="primary" id="s-native" hidden>Partager…</button><a class="wa" id="s-wa" href="#">WhatsApp</a><a id="s-tg" href="#">Telegram</a><a id="s-mail" href="#">E-mail</a><button type="button" id="s-copy">Copier le message</button></div><p class="ok" id="copied" role="status"></p></section></div>';
     $('month').value = S.month; $('year').value = S.year; $('unpaid').value = S.unp[mk()] || 0; $('leave-from').value = S.year + '-' + pad(S.month) + '-01';
@@ -281,6 +282,7 @@
       try { await navigator.clipboard.writeText(t); ok('Message copié.'); } catch (e) { $('msg').focus(); $('msg').select(); ok('Message sélectionné : copie-le avec le menu de ton appareil.'); }
     };
     if (Platform.share.available()) { $('s-native').hidden = false; $('s-native').onclick = function () { Platform.share.text($('msg').value); }; }
+    $('pdf-month').onclick = function () { exportRecap('pdf', 'month'); }; $('png-month').onclick = function () { exportRecap('png', 'month'); };
     if ($('print-month')) $('print-month').onclick = function () { window.print(); };
     updMois(); hist();
   }
@@ -438,13 +440,33 @@
   }
 
   /* ---------- Réglages + sauvegarde (F4) ---------- */
+  /* ---------- Récapitulatif PDF / image (F10) ---------- */
+  function currentMonthRecord() {
+    var V = view(), r = E.computeMonth(V);
+    return { key: mk(), year: S.year, month: S.month, rate: V.rate, indem: V.indem, hpd: V.hpd, hsup: V.hsup, unpaid: V.unpaid, mensu: r.mensu, heures: r.heures,
+      salaire: r.salaire, accueil: r.accueil, entretien: r.entretien, total: r.total, cpOuvres: r.cpOuvres, cpo: r.cpo, absN: r.days.filter(function (d) { return d.abs; }).length };
+  }
+  async function exportRecap(kind, scope) {
+    var ctx = { P: P, CH: CH, ST: ST }, msg = $(scope === 'year' ? 'y-msg' : 'recap-msg'), name, model;
+    if (scope === 'year') { model = Recap.yearModel(E.yearSummary(Object.keys(S.months).map(function (k) { return S.months[k]; }), S.payments, yearView, C.start), ctx); name = Recap.fileName(kind, yearView); }
+    else { var m = currentMonthRecord(); model = Recap.monthModel(m, S.payments, ctx); name = Recap.fileName(kind, m.year, m.month); }
+    try {
+      var ops = Recap.layout(model), b64, mime;
+      if (kind === 'pdf') { b64 = Recap.toBase64(Recap.pdf(ops)); mime = 'application/pdf'; }
+      else { var cv = document.createElement('canvas'); Recap.drawCanvas(ops, cv); b64 = cv.toDataURL('image/png').split(',')[1]; mime = 'image/png'; }
+      var ok = await Platform.files.exportBlob(name, mime, b64);
+      if (msg) msg.textContent = ok ? (kind === 'pdf' ? 'PDF prêt : ' : 'Image prête : ') + name : 'Export annulé ou échoué.';
+    } catch (e) { if (msg) msg.textContent = 'Export impossible sur cet appareil.'; console.error(e); }
+    if (msg) setTimeout(function () { if (msg) msg.textContent = ''; }, 5000);
+  }
+
   /* ---------- Année (F6) ---------- */
   var yearView = new Date().getFullYear();
   function sAnnee() {
     var y = E.yearSummary(Object.keys(S.months).map(function (k) { return S.months[k]; }), S.payments, yearView, C.start), f2 = function (v) { return fmtN(v, 2); };
     var rowsHtml = y.rows.map(function (r) {
       var name = cap(MONTHS[r.month - 1]);
-      if (r.status === 'avant_contrat') return '<div class="pj"><div><div class="l">' + name + '</div><div class="v">—</div></div><span class="badge">avant le contrat</span></div>';
+      if (r.status === 'avant_contrat') return '<div class="pj before"><div class="l">' + name + '</div><span class="badge">avant le contrat</span></div>';
       if (r.status === 'non_enregistre') return '<button type="button" class="pj yrow" data-ym="' + r.ym + '"><div><div class="l">' + name + '</div><div class="v">—</div></div><span class="badge warn">non enregistré</span></button>';
       return '<button type="button" class="pj yrow" data-ym="' + r.ym + '"><div><div class="l">' + name + ' — ' + r.mensu + ' j · ' + fmtN(r.heures, 1) + ' h · salaire ' + eur(r.salaire) + ' · entretien ' + eur(r.entretien) + '</div>' +
         '<div class="v">' + eur(r.total) + '</div><div class="l">versé ' + eur(r.paid) + ' · écart ' + eur(r.ecart) + '</div></div><span class="badge ' + (r.ecart > 0.004 ? 'warn' : r.ecart < -0.004 ? 'bad' : 'ok') + '">' + (r.ecart > 0.004 ? 'À verser' : r.ecart < -0.004 ? 'Trop-perçu' : 'Réglé') + '</span></button>';
@@ -457,6 +479,7 @@
         row('Entretien', eur(y.totals.entretien)) + row('Total dû', '<b>' + eur(y.totals.total) + '</b>', 'total') + row('Versé', eur(y.paid)) +
         row('Écart à ' + (y.ecart >= 0 ? 'verser' : 'récupérer'), '<b>' + eur(Math.abs(y.ecart)) + '</b>') + '</div>' +
         (y.unrecorded ? '<p class="hint" id="y-unrec">' + y.unrecorded + ' mois non enregistré' + (y.unrecorded > 1 ? 's' : '') + ' (non comptés dans les totaux).</p>' : '') +
+        '<div class="bar"><button type="button" id="y-pdf">Récapitulatif annuel PDF</button><button type="button" id="y-png">Récapitulatif annuel image</button></div><p class="ok" id="y-msg" role="status"></p>' +
         '<section class="panel" id="y-cp"><h2>Congés</h2><p style="margin-top:0">' + y.cpo + ' jour' + (y.cpo > 1 ? 's' : '') + ' ouvrable' + (y.cpo > 1 ? 's' : '') + ' pris en ' + y.year +
         '.</p><p class="hint">Les droits se calculent sur la période du 1er juin au 31 mai.</p><div class="bar"><button type="button" id="y-conges">Voir l\'écran Congés</button></div></section>';
     $('screen').innerHTML = '<div class="stack"><header><h1>Année ' + y.year + '</h1><p class="sub">Totaux des mois enregistrés et versements de l\'année civile.</p></header>' +
@@ -466,12 +489,13 @@
     document.querySelectorAll('.yrow').forEach(function (b) {
       b.onclick = function () { var p = b.dataset.ym.split('-'); S.year = Number(p[0]); S.month = Number(p[1]); go('mois'); };
     });
+    if ($('y-pdf')) { $('y-pdf').onclick = function () { exportRecap('pdf', 'year'); }; $('y-png').onclick = function () { exportRecap('png', 'year'); }; }
     if ($('y-conges')) $('y-conges').onclick = function () { go('conges'); };
   }
   function sReglages() {
     var lb = ST.lastBackupAt ? 'Dernière sauvegarde : ' + fmtDate(ST.lastBackupAt.slice(0, 10)) : 'Aucune sauvegarde effectuée.';
     $('screen').innerHTML = '<div class="stack"><header><h1>Réglages</h1></header>' +
-      '<section class="panel"><h2>Profil du parent</h2>' + parentForm(P) + '<div class="bar"><button type="button" class="primary" id="sv-p">Enregistrer</button></div></section>' +
+      '<section class="panel"><h2>Profil du parent</h2>' + parentForm(P, true) + '<div class="bar"><button type="button" class="primary" id="sv-p">Enregistrer</button></div></section>' +
       '<section class="panel"><h2>Enfant</h2>' + childForm(CH) + '<div class="bar"><button type="button" class="primary" id="sv-c">Enregistrer</button></div></section>' +
       '<section class="panel"><h2>Contrat et tarifs</h2>' + contractForm(C) + '<div class="bar"><button type="button" class="primary" id="sv-k">Enregistrer</button></div>' +
       '<p class="hint">Les mois déjà enregistrés gardent leurs tarifs ; les autres utilisent les nouveaux.</p></section>' +

@@ -2,7 +2,7 @@
    app.js n'appelle que cette interface ; une coquille native ajoute son implémentation ici. */
 (function (root) {
   'use strict';
-  var APP_VERSION = '1.4.0';
+  var APP_VERSION = '1.5.0';
   var A = root.Android || null;
   var cap = root.Capacitor && root.Capacitor.isNativePlatform && root.Capacitor.isNativePlatform() && root.Capacitor.getPlatform && root.Capacitor.getPlatform() === 'ios';
   var P = { APP_VERSION: APP_VERSION, target: A ? 'android' : (cap ? 'ios' : 'web') };
@@ -25,6 +25,9 @@
     try { return !!(root.navigator.storage && root.navigator.storage.persist && await root.navigator.storage.persist()); } catch (e) { return false; }
   };
 
+  var binPending = null;
+  root.onBinaryExportResult = function (ok) { var r = binPending; binPending = null; if (r) r(!!ok); };
+
   P.files = {
     exportJSON: function (name, json) {
       if (A && A.exportFile) { A.exportFile(name, json); return; }
@@ -32,6 +35,20 @@
       a.href = root.URL.createObjectURL(new Blob([json], { type: 'application/json' })); a.download = name;
       root.document.body.appendChild(a); a.click(); a.remove();
       root.onExportResult(true);
+    },
+    // Fichier binaire (PDF, PNG) : web = téléchargement, Android = création de document, iOS = feuille de partage. Résout true/false.
+    exportBlob: function (name, mime, b64) {
+      return new Promise(function (resolve) {
+        if (A && A.exportBinary) { binPending = resolve; A.exportBinary(name, mime, b64); return; }
+        try {
+          var bin = root.atob(b64), u = new Uint8Array(bin.length), i;
+          for (i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+          var a = root.document.createElement('a');
+          a.href = root.URL.createObjectURL(new Blob([u], { type: mime })); a.download = name;
+          root.document.body.appendChild(a); a.click(); a.remove();
+          resolve(true);
+        } catch (e) { resolve(false); }
+      });
     },
     importJSON: function () {
       if (A && A.importFile) { A.importFile(); return; }
@@ -48,7 +65,7 @@
     }
   };
 
-  if (IOS) { P.files.exportJSON = IOS.files.exportJSON; P.share = IOS.share; }
+  if (IOS) { P.files.exportJSON = IOS.files.exportJSON; P.files.exportBlob = IOS.files.exportBlob; P.share = IOS.share; }
 
   P.canPrint = P.target === 'web';
 

@@ -1,6 +1,6 @@
 {
   "name": "paie-assmat",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "description": "Paie Assistante Maternelle — coquille iOS (Capacitor). Le cœur web est dans app/src/main/assets.",
   "scripts": {
