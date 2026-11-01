@@ -18,7 +18,7 @@ Objectifs mesurables :
 - Historique complet des mois sur le téléphone, sauvegardable en un geste.
 - Calcul vérifiable : chaque montant affiche sa formule et ses hypothèses.
 
-Hors périmètre : bulletin de paie officiel, calcul des cotisations, estimation du CMG, contrats de 46 semaines ou moins, accueil occasionnel, comptes en ligne et synchronisation entre plusieurs utilisateurs.
+Hors périmètre : bulletin de paie officiel, calcul des cotisations, estimation du CMG (reprise en F12, voir [03](03-F6-F10-F12.md)), contrats de 46 semaines ou moins, accueil occasionnel, comptes en ligne et synchronisation entre plusieurs utilisateurs.
 
 ## État actuel (v1.0)
 
@@ -52,21 +52,23 @@ L'utilisateur principal est le parent-employeur qui déclare chaque mois sur Paj
 
 Cinq évolutions sont indispensables pour la v1.1 (F0 à F4), toutes pour le seul contrat de 52 semaines ; les autres améliorent le confort ou élargissent l'usage. Effort : S = moins de 2 jours, M = 2 à 5 jours, L = plus de 5 jours.
 
-| Id | Évolution | Priorité | Effort |
-|---|---|---|---|
-| F0 | Profil du parent et de l'enfant, contrat de 52 semaines | Indispensable | S |
-| F1 | Droits à congés : acquis, pris, solde, alertes | Indispensable | M |
-| F2 | Écran « À saisir dans Pajemploi » | Indispensable | S |
-| F3 | Registre des paiements et régularisations | Indispensable | M |
-| F4 | Sauvegarde et restauration par fichier | Indispensable | S |
-| F5 | Types d'absence et minoration officielle | Important | M |
-| F6 | Vue annuelle et cumuls | Important | M |
-| F7 | Tarifs datés (avenants) et mois partiels | Important | M |
-| F8 | Plusieurs contrats ou enfants | Souhaitable | L |
-| F9 | Rappels par notification locale | Souhaitable | S |
-| F10 | Récapitulatif en PDF ou image | Souhaitable | M |
-| F11 | Verrouillage par empreinte ou code | Souhaitable | S |
-| F12 | Estimation du reste à charge (CMG) | Reporté | L |
+| Id | Évolution | Priorité | Effort | Statut au 2026-11-01 |
+|---|---|---|---|---|
+| F0 | Profil du parent et de l'enfant, contrat de 52 semaines | Indispensable | S | **Done** (v1.1.0) |
+| F1 | Droits à congés : acquis, pris, solde, alertes | Indispensable | M | **Done** (v1.1.0) |
+| F2 | Écran « À saisir dans Pajemploi » | Indispensable | S | **Done** (v1.1.0) |
+| F3 | Registre des paiements et régularisations | Indispensable | M | **Done** (v1.1.0) |
+| F4 | Sauvegarde et restauration par fichier | Indispensable | S | **Done** (v1.1.0) |
+| F5 | Types d'absence et minoration officielle | Important | M | **Not done** |
+| F6 | Vue annuelle et cumuls | Important | M | **Not done** (spécifiée : [03](03-F6-F10-F12.md)) |
+| F7 | Tarifs datés (avenants) et mois partiels | Important | M | **Not done** (partiel : un mois enregistré garde son tarif) |
+| F8 | Plusieurs contrats ou enfants | Souhaitable | L | **Not done** |
+| F9 | Rappels par notification locale | Souhaitable | S | **Not done** (le bandeau de rappel après 30 jours de F4 existe) |
+| F10 | Récapitulatif en PDF ou image | Souhaitable | M | **Not done** (spécifiée : [03](03-F6-F10-F12.md)) |
+| F11 | Verrouillage par empreinte ou code | Souhaitable | S | **Not done** |
+| F12 | Estimation du reste à charge (CMG) | Reporté, désormais spécifié | L | **Not done** (spécifiée : [03](03-F6-F10-F12.md)) |
+
+**Lecture des statuts.** *Done* = présent dans `main`, couvert par des tests et vérifié en CI. F0 à F4 sont livrés dans le code partagé par les trois cibles ; leur fonctionnement sur iPhone et sur téléphone Huawei n'est pas encore vérifié sur appareil (voir [02-multiplateforme.md](02-multiplateforme.md)). *Not done* = absent de `main`. L'impression d'un mois depuis le navigateur (version web) n'est pas F10 : elle ne produit pas de fichier partageable sur mobile.
 
 ### Critères d'acceptation des évolutions indispensables
 
