@@ -64,7 +64,8 @@ Cinq évolutions sont indispensables pour la v1.1 (F0 à F4), toutes pour le seu
 | F7 | Tarifs datés (avenants) et mois partiels | Important | M | **Not done** (partiel : un mois enregistré garde son tarif) |
 | F8 | Plusieurs contrats ou enfants | Souhaitable | L | **Not done** |
 | F9 | Rappels par notification locale | Souhaitable | S | **Not done** (le bandeau de rappel après 30 jours de F4 existe) |
-| F10 | Récapitulatif en PDF ou image | Souhaitable X | Verrouillage par empreinte ou code | Souhaitable | S | **Not done** |
+| F10 | Récapitulatif en PDF ou image | Souhaitable | M | **Not done** (spécifiée : [03](03-F6-F10-F12.md), PDF et image livrés ensemble) |
+| F11 | Verrouillage par empreinte ou code | Souhaitable | S | **Not done** |
 | F12 | Estimation du reste à charge (CMG) | Écartée (2026-11-01) | L | **Not done**, mise de côté : la formule exige les ressources du foyer (contenu conservé dans [03](03-F6-F10-F12.md)) |
 
 **Lecture des statuts.** *Done* = présent dans `main`, couvert par des tests et vérifié en CI. F0 à F4 sont livrés dans le code partagé par les trois cibles ; leur fonctionnement sur iPhone et sur téléphone Huawei n'est pas encore vérifié sur appareil (voir [02-multiplateforme.md](02-multiplateforme.md)). *Not done* = absent de `main`. L'impression d'un mois depuis le navigateur (version web) n'est pas F10 : elle ne produit pas de fichier partageable sur mobile.
