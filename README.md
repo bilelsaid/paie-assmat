@@ -20,6 +20,8 @@ Copie `app-debug.apk` sur le téléphone, ouvre-le, autorise « Installer des ap
 Stockées dans les données de l'appli (IndexedDB). Elles restent sur le téléphone, survivent à la fermeture de l'appli,
 mais sont supprimées si tu désinstalles l'appli ou si tu effaces ses données.
 
+Documentation et spécifications : voir [`docs/`](docs/README.md).
+
 ## Version 1.3.0 — multiplateforme, phases 2 (AppGallery) et 3 (iOS)
 
 **AppGallery (Huawei)** — APK release signé par notre propre clé, sans service Google ni permission réseau.
